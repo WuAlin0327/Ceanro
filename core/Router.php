@@ -3,6 +3,10 @@
 class Router
 {
 
+    /**
+     * 路由分发
+     * @param $path_info
+     */
     public function distribution($path_info){
         $path = register();
         $request_path = implode('/',$path_info);
@@ -11,13 +15,17 @@ class Router
             if (!empty($ret)){
                 $func = explode('/',$v);
                 include('./controller/'.$func[0].'.php');
-                $response = call_user_func(array_slice($func,0,2),!empty($func[2])?$func[2]:null);
+                $obj = new $func[0];
+                $response = call_user_func(array($obj,$func[1]),!empty($path_info[2])?$path_info[2]:null);
                 echo $response;
                 exit;
             }
         }
     }
 
+    /**
+     * 入口函数
+     */
     public function main(){
         $path_info = explode('/',substr($_SERVER['PATH_INFO'],1));
         self::distribution($path_info);

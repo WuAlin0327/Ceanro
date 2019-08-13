@@ -14,14 +14,4 @@ class Response
         $this->data = call_user_func([__CLASS__,$type],$data,$callback,$status);
     }
 
-    public function json($data,$callback=null,$status=200){
-        $str = json_encode($data);
-        if (!empty($callback)){
-            $str = $callback.'('.$str.')';
-        }
-        $obj = new core\Core();
-        $config = $obj->config();
-        header($config['http_response'][$status]);
-        return $str;
-    }
 }

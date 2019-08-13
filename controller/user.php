@@ -1,13 +1,19 @@
 <?php
 
 
-class user
+class user extends \core\Core\Core
 {
+
+    public $id = 'id';
+    public $table = 'user';
+
     static $user_list = [
         ['name'=>'alex','age'=>'20','addr'=>'江西新余'],
         ['name'=>'dalao','age'=>'22','addr'=>'江西南昌']
     ];
+
     public function get(){
+        echo '11';
         return '<h1>轻量级web后端框架</h1><br><h3>轻量级遵循RESTful API规范的框架</h3>';
     }
 
@@ -29,7 +35,7 @@ class user
 
     public function replace($id){
         $callback = isset($_GET['callback'])?$_GET['callback']:'';
-        $response = new Response(self::$user_list[$id],'json',$callback.date('YmdHis'),'200');
-        return $response->data;
+        $data = $this->find($id,'object');
+        return parent::json($data,$callback,'201');
     }
 }

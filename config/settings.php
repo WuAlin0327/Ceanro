@@ -41,5 +41,13 @@ return[
         502 => "HTTP/1.1 502 Bad Gateway",
         503 => "HTTP/1.1 503 Service Unavailable",
         504 => "HTTP/1.1 504 Gateway Time-out"
-    ]
+    ], // 响应状态
+    'mysql'=>[
+        'host'=>'localhost', // ip
+        'port'=>'3306', // 端口
+        'user'=>'root', // 用户名
+        'password'=>'', // 密码
+        'database'=>'restful', // 数据库
+    ],
+    'db_prefix'=>'db_' // 数据库表前缀
 ];
