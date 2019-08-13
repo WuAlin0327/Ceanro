@@ -3,24 +3,24 @@
 class Router
 {
 
-    public function path($paths,$path_info){
-        $path = $paths;
+    public function distribution($path_info){
+        $path = register();
         $request_path = implode('/',$path_info);
         foreach($path as $k=>$v){
             preg_match('/'.self::escape($k).'/',$request_path,$ret);
             if (!empty($ret)){
-                $func = explode('/',$request_path);
+                $func = explode('/',$v);
                 include('./controller/'.$func[0].'.php');
-                $response = call_user_func(array_slice($func,0,2),$func[2]);
+                $response = call_user_func(array_slice($func,0,2),!empty($func[2])?$func[2]:null);
                 echo $response;
                 exit;
             }
         }
     }
 
-    public function main($paths){
+    public function main(){
         $path_info = explode('/',substr($_SERVER['PATH_INFO'],1));
-        self::path($paths,$path_info);
+        self::distribution($path_info);
         include('./controller/'.$path_info[0].'.php');
         $method = strtolower($_SERVER['REQUEST_METHOD']);
         $response = call_user_func([$path_info[0],$method]);
@@ -31,4 +31,5 @@ class Router
         $str = str_replace('/','\/',$str);
         return $str;
     }
+
 }

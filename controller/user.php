@@ -28,7 +28,7 @@ class user
     }
 
     public function replace($id){
-        $callback = $_GET['callback'];
+        $callback = isset($_GET['callback'])?$_GET['callback']:'';
         $response = new Response(self::$user_list[$id],'json',$callback.date('YmdHis'),'200');
         return $response->data;
     }
