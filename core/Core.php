@@ -6,7 +6,7 @@
  * Time: 23:30
  */
 
-namespace core\Core;
+namespace core;
 class Core
 {
 
@@ -34,6 +34,7 @@ class Core
     /**
      * 根据ID取一条数据
      * @param $id 主键
+     * @param $type 'array' || 'all' || 'assoc' || 'row' || 'object' || 'field'
      * @return array|null
      */
     public function find($id,$type='assoc'){

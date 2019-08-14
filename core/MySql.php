@@ -6,9 +6,7 @@
  * Time: 20:43
  */
 
-namespace core\Core;
-
-
+namespace core;
 class MySql
 {
     public $link;
@@ -25,6 +23,10 @@ class MySql
 
     }
 
+    /**
+     * 关闭mysql数据库链接
+     * @param $link
+     */
     public function close($link){
         mysqli_close($link);
     }

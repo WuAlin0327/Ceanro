@@ -1,7 +1,7 @@
 <?php
 
 
-class user extends \core\Core\Core
+class user extends \core\Core
 {
 
     public $id = 'id';
