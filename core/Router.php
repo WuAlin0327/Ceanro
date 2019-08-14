@@ -28,10 +28,14 @@ class Router
      */
     public function main(){
         $path_info = explode('/',substr($_SERVER['PATH_INFO'],1));
+        if (empty($path_info[0])){
+            $path_info[0] = 'index';
+        }
         self::distribution($path_info);
         include('./controller/'.$path_info[0].'.php');
-        $method = strtolower($_SERVER['REQUEST_METHOD']);
-        $response = call_user_func([$path_info[0],$method]);
+        $method = get_config('method');
+        $obj = new $path_info[0];
+        $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[1])?$path_info[1]:null);
         echo $response;
     }
 

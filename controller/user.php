@@ -1,31 +1,27 @@
 <?php
 
-
 class user extends \core\Core
 {
 
     public $id = 'id';
-    public $table = 'user';
+    public $table = __CLASS__; //
 
-    static $user_list = [
-        ['name'=>'alex','age'=>'20','addr'=>'江西新余'],
-        ['name'=>'dalao','age'=>'22','addr'=>'江西南昌']
-    ];
-
-    public function get(){
-        echo '11';
-        return '<h1>轻量级web后端框架</h1><br><h3>轻量级遵循RESTful API规范的框架</h3>';
+    public function get($id=null){
+        $data = $this->select($id);
+        return $this->json($data);
     }
 
     public function post(){
-        echo '这个是post请求';
+        $this->insert();
     }
 
     public function delete(){
+        $this->remove();
         echo '这个是delete请求';
     }
 
     public function put(){
+        $this->update();
         echo '这个是put请求';
     }
 
@@ -36,6 +32,6 @@ class user extends \core\Core
     public function replace($id){
         $callback = isset($_GET['callback'])?$_GET['callback']:'';
         $data = $this->find($id,'object');
-        return parent::json($data,$callback,'201');
+        return $this->json($data,$callback,'201');
     }
 }

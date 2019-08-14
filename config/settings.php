@@ -49,5 +49,13 @@ return[
         'password'=>'', // 密码
         'database'=>'restful', // 数据库
     ],
-    'db_prefix'=>'db_' // 数据库表前缀
+    'db_prefix'=>'db_', // 数据库表前缀
+
+    // 请求方法对应的处理函数
+    'method'=>[
+        'get'=>'get', // 获取列表,如果最后加上id,只会获取一条数据,例如:/user/1
+        'post'=>'post',  // 向表中插入数据
+        'delete'=>'delete', // delete请求,删除数据,需要传入id,例如:/user/1
+        'put'=>'put' // put请求,更新数据，需要传入id,例如:/user/1
+    ]
 ];
