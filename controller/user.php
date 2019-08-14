@@ -6,11 +6,6 @@ class user extends \core\Core
     public $id = 'id';
     public $table = __CLASS__; //
 
-    public function get($id=null){
-        $data = $this->select($id);
-        return $this->json($data);
-    }
-
     public function post(){
         $this->insert();
     }

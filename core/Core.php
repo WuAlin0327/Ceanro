@@ -98,6 +98,7 @@ class Core
             if ($v['extra'] == 'auto_increment')continue;
 
             $value = $this->_post($v['field']);
+
             if (!$v['null'] && empty($value)){
                 $arr[$v['field']] = $v['field'].' is null!';
                 continue;
@@ -122,28 +123,43 @@ class Core
     public function where(){
         $where = [];
         foreach($this->fields as $k=>$v){
-            if (isset($_GET[$v['field']])){
-                $where [] =  ' '.$v['field'].' like \'%'.$_GET[$v['field']].'%\'';
+            $val = $this->_get($v['field']);
+            if (isset($val)){
+                $where [] =  ' '.$v['field'].' like \'%'.$val.'%\'';
             }
         }
         $where = implode(' and ',$where);
         return $where;
     }
 
+    public static function params($key){
+        $val = isset($_REQUEST[$key])?$_REQUEST[$key]:null;
+        return $val;
+    }
 
     /**
      * 处理GET参数
      */
-    public function params(){
-
+    public function _get($key){
+        return static::params($key);
     }
 
     /**
      * 处理$_POST参数
      */
     public function _post($key){
-        $val = isset($_POST[$key])?$_POST[$key]:null;
-        return $val;
+
+        return static::params($key);
+    }
+
+    /**
+     * get请求
+     * @param null $id
+     * @return false|string
+     */
+    public function get($id=null){
+        $data = $this->select($id);
+        return $this->json($data);
     }
 
 }

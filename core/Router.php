@@ -7,7 +7,7 @@ class Router
      * 路由分发
      * @param $path_info
      */
-    public function distribution($path_info){
+    public static function distribution($path_info){
         $path = register();
         $request_path = implode('/',$path_info);
         foreach($path as $k=>$v){
@@ -26,7 +26,7 @@ class Router
     /**
      * 入口函数
      */
-    public function main(){
+    public static function main(){
         $path_info = explode('/',substr($_SERVER['PATH_INFO'],1));
         if (empty($path_info[0])){
             $path_info[0] = 'index';
