@@ -13,15 +13,15 @@ class DataBase
         'row'=>'',
         'all'=>4,
     ];
-    public $db;
+    public $conn;
     public $table;
     public function __construct($table)
     {
         $this->table = $table;
         $config = get_config('sql');
         $dsn = "{$config['dbms']}:host={$config['host']};dbname={$config['dbname']}";
-        $this->db = new \PDO($dsn,$config['user'],$config['password']);
-        $this->db->exec('set names utf8');
+        $this->conn = new \PDO($dsn,$config['user'],$config['password']);
+        $this->conn->exec('set names utf8');
 
     }
 
@@ -32,7 +32,7 @@ class DataBase
      */
     public function exclude($sql,$format=[],$type='list[dict]'){
 
-        $stm = $this->db->prepare($sql);
+        $stm = $this->conn->prepare($sql);
         $stm->execute($format);
         $data = $stm->fetchAll($this->data_format[$type]);
         return $data;
@@ -60,5 +60,21 @@ class DataBase
             $ret[$v['db_fields']]['db_null'] = $ret[$v['db_fields']]['db_null'] == 'NO'?false:true;
         }
         return $ret;
+    }
+
+    /**
+     *
+     * $arr 清洗后需要插入到数据库中的数据
+     */
+    public function insert_format($arr){
+        $into = [];
+        $value = [];
+        foreach($arr as $k=>$v){
+            $into[] = $k;
+            $value[] ='\''.$v.'\'';
+        }
+        $sql = '('.implode(',',$into).') VALUES ('.implode(',',$value).')';
+        return $sql;
+
     }
 }

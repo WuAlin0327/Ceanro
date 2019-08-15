@@ -37,7 +37,8 @@ class Core
     public function __construct()
     {
         $this->db_prefix = get_config('db_prefix');
-        $this->db = new DataBase($this->db_prefix.$this->table);
+        $this->table = $this->db_prefix.$this->table;
+        $this->db = new DataBase($this->table);
         $this->fields = $this->db->get_fields();
 
     }
@@ -46,11 +47,11 @@ class Core
     /**
      * 根据ID取一条数据
      * @param $id 主键
-     * @param $type 'array' || 'all' || 'assoc' || 'row' || 'object' || 'field'
+     * @param $type list[object] || list[list] || list[dict] || all || row
      * @return array|null
      */
-    public function find($id,$type='assoc'){
-        $data = $this->db->exclude('select * from '.$this->db_prefix.$this->table.' where '.$this->id.'='.$id,$type);
+    public function find($id,$type='list[object]'){
+        $data = $this->db->exclude('select * from '.$this->table.' where '.$this->id.' = ?',[$id],$type);
         return $data;
     }
 
@@ -63,12 +64,12 @@ class Core
 
 
         if (!empty($id)){
-            $data = $this->find($id,'assoc');
+            $data = $this->find($id);
             return $data;
         }
         $where = $this->where(); // 将$_GET参数拼接成sql语句进行查询(模糊查询)
         $where = !empty($where)?' where '.$where:'';
-        $sql = 'select * from '.$this->db_prefix.$this->table.$where;
+        $sql = 'select * from '.$this->table.$where;
         $data = $this->db->exclude($sql);
         return $data;
     }
@@ -85,19 +86,46 @@ class Core
      */
     public function insert(){
         $arr = [];
+
+        // 标识位，如果有错误则不能插入数据
+        $flag = false;
         foreach($this->fields as $k=>$v){
             if ($v['extra'] == 'auto_increment')continue;
 
-            $value = $this->_post($v['field']);
+            $value = $this->_post($k);
 
-            if (!$v['null'] && empty($value)){
-                $arr[$v['field']] = $v['field'].' is null!';
+            if (!$v['db_null'] && empty($value)){
+                $flag = true;
+                $arr[$k] = !empty($v['comment'])?$v['comment'].'不能为空':$k.'不能为空';
                 continue;
             };
-            $arr[$v['field']] = $value;
+            $arr[$k] = $value;
         }
+        if ($flag){
+            return [
+                'Code'=>0,
+                'data'=>$arr
+            ];
+        }
+
+        $format = $this->db->insert_format($arr);
+
+        $sql = "insert into {$this->table} {$format}";
+
+        try{
+
+            $row = $this->db->conn->exec($sql);
+            return [
+                'Code'=>$row,
+                'data'=>$arr,
+                'msg'=>'插入成功',
+            ];
+        }catch (\PDOException $e){
+            die('插入失败'.$e->getMessage());
+        }
+
 //        echo json_encode($this->fields);
-        echo json_encode($arr);
+
     }
 
     /**
@@ -140,7 +168,7 @@ class Core
      */
     public function _post($key){
 
-        return static::params($key);
+        return isset($_POST[$key])?$_POST[$key]:null;
     }
 
     /**
@@ -150,7 +178,19 @@ class Core
      */
     public function get($id=null){
         $data = $this->select($id);
-        return $this->json($data);
+        $response = [
+            'Code'=>1,
+            'data'=>$data
+        ];
+        return $this->json($response);
     }
 
+    /**
+     * post请求
+     * @return false|string
+     */
+    public function post(){
+        $res = $this->insert();
+        return $this->json($res);
+    }
 }
