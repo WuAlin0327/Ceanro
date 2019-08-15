@@ -11,5 +11,6 @@ require_once ROOT_PATH.'/core/Router.php';
 //require 'core/Response.php';
 require_once ROOT_PATH.'/core/Core.php';
 require_once ROOT_PATH.'/core/MySql.php';
+require_once ROOT_PATH . '/core/DataBase.php';
 Router::main();
 exit;

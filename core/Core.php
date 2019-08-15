@@ -13,7 +13,7 @@ class Core
     public $table ;
     public $id = 'id';
     public $db_prefix;
-    public $mysql;
+    public $db;
     public $fields;
 
 
@@ -37,8 +37,8 @@ class Core
     public function __construct()
     {
         $this->db_prefix = get_config('db_prefix');
-        $this->mysql = new MySql($this->db_prefix.$this->table);
-        $this->fields = $this->mysql->get_fields();
+        $this->db = new DataBase($this->db_prefix.$this->table);
+        $this->fields = $this->db->get_fields();
 
     }
 
@@ -50,7 +50,7 @@ class Core
      * @return array|null
      */
     public function find($id,$type='assoc'){
-        $data = $this->mysql->exclude('select * from '.$this->db_prefix.$this->table.' where '.$this->id.'='.$id,$type);
+        $data = $this->db->exclude('select * from '.$this->db_prefix.$this->table.' where '.$this->id.'='.$id,$type);
         return $data;
     }
 
@@ -68,17 +68,8 @@ class Core
         }
         $where = $this->where(); // 将$_GET参数拼接成sql语句进行查询(模糊查询)
         $where = !empty($where)?' where '.$where:'';
-        $sql = $fields = 'select * from '.$this->db_prefix.$this->table.$where;
-        $db_fields = $this->mysql->exclude($fields,'fields');
-        $data = $this->mysql->exclude($sql,'all');
-        if ($struct == 'list[dict]'){
-            foreach($data as $k=>$v){
-                foreach($v as $kk=>$vv){
-                    $data[$k][$db_fields[$kk]->name] = $vv;
-                    unset($data[$k][$kk]);
-                }
-            }
-        }
+        $sql = 'select * from '.$this->db_prefix.$this->table.$where;
+        $data = $this->db->exclude($sql);
         return $data;
     }
 
@@ -123,9 +114,9 @@ class Core
     public function where(){
         $where = [];
         foreach($this->fields as $k=>$v){
-            $val = $this->_get($v['field']);
+            $val = $this->_get($k);
             if (isset($val)){
-                $where [] =  ' '.$v['field'].' like \'%'.$val.'%\'';
+                $where [] =  ' '.$k.' like \'%'.$val.'%\'';
             }
         }
         $where = implode(' and ',$where);

@@ -13,8 +13,8 @@ class MySql
     public $table;
     public function __construct($table)
     {
-        $config = get_config('mysql');
-        $link = mysqli_connect($config['host'],$config['user'],'',$config['database'],$config['port']);
+        $config = get_config('sql');
+        $link = mysqli_connect($config['host'],$config['user'],'',$config['dbname'],$config['port']);
         if (!$link){
             die('连接数据库出错:'.mysqli_error($link));
         }
