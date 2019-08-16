@@ -17,23 +17,6 @@ class Core
     public $fields;
 
 
-    /**
-     * 返回Json数据
-     * @param $data 需要格式化的数据
-     * @param null $callback 回调参数
-     * @param int $status 响应状态
-     * @return false|string 返回json字符串
-     */
-    public function json($data,$callback=null,$status=200){
-        $str = json_encode($data);
-        if (!empty($callback)){
-            $str = $callback.'('.$str.')';
-        }
-        $config = get_config('http_response');
-        header($config[$status]);
-        return $str;
-    }
-
     public function __construct()
     {
         $this->db_prefix = get_config('db_prefix');
@@ -85,30 +68,13 @@ class Core
      * 插入数据
      */
     public function insert(){
-        $arr = [];
+        $arrd = $this->filter();
 
         // 标识位，如果有错误则不能插入数据
-        $flag = false;
-        foreach($this->fields as $k=>$v){
-            if ($v['extra'] == 'auto_increment')continue;
-
-            $value = $this->_post($k);
-
-            if (!$v['db_null'] && empty($value)){
-                $flag = true;
-                $arr[$k] = !empty($v['comment'])?$v['comment'].'不能为空':$k.'不能为空';
-                continue;
-            };
-            $arr[$k] = $value;
+        if ($arrd['error']){
+            return $arrd;
         }
-        if ($flag){
-            return [
-                'Code'=>0,
-                'data'=>$arr
-            ];
-        }
-
-        $format = $this->db->insert_format($arr);
+        $format = $this->db->insert_format($arrd['brand']);
 
         $sql = "insert into {$this->table} {$format}";
 
@@ -117,7 +83,7 @@ class Core
             $row = $this->db->conn->exec($sql);
             return [
                 'Code'=>$row,
-                'data'=>$arr,
+                'data'=>$arrd['brand'],
                 'msg'=>'插入成功',
             ];
         }catch (\PDOException $e){
@@ -129,10 +95,57 @@ class Core
     }
 
     /**
+     * @param null $data 需要校验的数据,如果不传入需要校验的数据则默认使用_post请求中的参数
+     * @return array 返回校验后的数据
+     */
+    public function filter($data=null){
+        $arr = [];
+        $flag = false;
+        foreach($this->fields as $k=>$v){
+            if ($v['extra'] == 'auto_increment')continue;
+
+            $value = !empty($data[$k])?$data[$k]:$this->_post($k);
+
+            // 判断是否为空
+            if (!$v['db_null'] && empty($value)){
+                $flag = true;
+                $arr[$k] = !empty($v['comment'])?$v['comment'].'不能为空':$k.'不能为空';
+                continue;
+            };
+
+            // 判断长度
+            if (($v['data_type'] == 'varchar' || $v['data_type'] == 'char') && !empty($v['max_length']) && strlen($value) > $v['max_length']){
+                $flag = true;
+                $arr[$k] = !empty($v['comment'])?$v['comment']:$k;
+                $arr[$k].='最大长度是:'.$v['max_length'];
+                continue;
+            }
+
+            $arr[$k] = $value;
+        }
+        return [
+            'error'=>$flag,
+            'brand'=>$arr,
+        ];
+    }
+
+    /**
      * 删除数据
      */
-    public function remove(){
-
+    public function remove($id){
+        try{
+            // $sql = 'delete from '.$this->table.' where '.$this->id .'='.$id;
+            $sql = "delete from {$this->table} where {$this->id} = {$id}";
+            $row = $this->db->conn->exec($sql);
+            return [
+                'Code'=>$row
+            ];
+        }catch (\PDOException $e){
+            return [
+                'Code'=>0,
+                'msg'=>'删除数据失败'
+            ];
+        }
     }
 
     /**
@@ -182,15 +195,30 @@ class Core
             'Code'=>1,
             'data'=>$data
         ];
-        return $this->json($response);
+        return json($response);
     }
 
     /**
-     * post请求
      * @return false|string
      */
     public function post(){
         $res = $this->insert();
-        return $this->json($res);
+        return json($res);
+    }
+
+    /**
+     * 删除数据
+     * @param $id
+     * @return false|string
+     */
+    public function delete($id){
+        if (!$id){
+            return json([
+                'Code'=>0,
+                'msg'=>'请传入id参数',
+            ]);
+        }
+        $result = $this->remove($id);
+        return json($result);
     }
 }
