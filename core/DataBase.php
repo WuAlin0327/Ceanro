@@ -77,4 +77,18 @@ class DataBase
         return $sql;
 
     }
+
+
+    /**
+     * @param $arr
+     * @return mixed
+     *  update user set username=?,password=? where id = x
+     */
+    public function update_format($arr){
+        $update = [];
+        foreach($arr as $k=>$v){
+            $update[] = $k.'=\''.$v.'\'';
+        }
+        return implode(',',$update);
+    }
 }

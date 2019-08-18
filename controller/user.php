@@ -6,21 +6,21 @@ class user extends \core\Core
     public $id = 'id';
     public $table = __CLASS__; //
 
-
-
-
-    public function delete(){
-        $this->remove();
-        echo '这个是delete请求';
+    public function get($id=null){
+        // get业务逻辑
+    }
+    public function post(){
+        // post业务逻辑
     }
 
-    public function put(){
-        $this->update();
-        echo '这个是put请求';
+    public function put($id)
+    {
+        // put业务逻辑
     }
 
-    public function func(){
-        echo '这是一个func函数';
+    public function delete($id)
+    {
+        // delete业务逻辑
     }
 
     public function replace($id){

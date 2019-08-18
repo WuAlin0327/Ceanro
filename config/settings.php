@@ -58,5 +58,10 @@ return[
         'post'=>'post',  // 向表中插入数据
         'delete'=>'delete', // delete请求,删除数据,需要传入id,例如:/user/1
         'put'=>'put' // put请求,更新数据，需要传入id,例如:/user/1
+    ],
+
+    // 中间件
+    'middleware'=>[
+        'FirstMiddleware'
     ]
 ];

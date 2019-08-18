@@ -26,8 +26,7 @@ function get_config($name=null){
  * @return false|string 返回json字符串
  */
 function json($data,$callback=null,$status=200){
-    $data['url'] = $_SERVER['PATH_INFO'];
-    $data['method'] = $_SERVER['REQUEST_METHOD'];
+
     $str = json_encode($data);
     if (!empty($callback)){
         $str = $callback.'('.$str.')';
@@ -49,8 +48,6 @@ function hasIndex( $arr ){
  * @return string xml格式数据
  */
 function xml( $data, $wrap= 'xml' ){
-    $data['url'] = $_SERVER['PATH_INFO'];
-    $data['method'] = $_SERVER['REQUEST_METHOD'];
     $str = "<{$wrap}>";
     if( is_array( $data ) ){
         if( hasIndex( $data ) ){
@@ -66,5 +63,34 @@ function xml( $data, $wrap= 'xml' ){
     }else
         $str .= $data;
     $str .= "</{$wrap}>";
+
     return $str;
+}
+
+function get_put(){
+    try{
+        $putData = file_get_contents("php://input");
+        $resultData = json_decode($putData,true);
+        if(is_array($resultData)){
+            //解析IOS提交的PUT数据
+            return $resultData;
+        }
+        if(!strstr($putData,"\r\n")){
+            //解析本地测试工具提交的PUT数据
+            parse_str($putData,$putData);
+            return $putData;
+        }
+        //解析PHP CURL提交的PUT数据
+        $putData = explode("\r\n",$putData);
+        $resultData = [];
+        foreach($putData as $key=>$data){
+            if(substr($data,0,20) == 'Content-Disposition:'){
+                preg_match('/.*\"(.*)\"/',$data,$matchName);
+                $resultData[$matchName[1]] = $putData[$key+2];
+            }
+        }
+        return $resultData;
+    }catch (Exception $e){
+        return [];
+    }
 }

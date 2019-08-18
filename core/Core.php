@@ -34,7 +34,7 @@ class Core
      * @return array|null
      */
     public function find($id,$type='list[object]'){
-        $data = $this->db->exclude('select * from '.$this->table.' where '.$this->id.' = ?',[$id],$type);
+        $data = $this->db->exclude('select * from '.$this->table.' where '.$this->id.' = ?',[$id]);
         return $data;
     }
 
@@ -58,10 +58,28 @@ class Core
     }
 
     /**
+     * 根据id更新数据
      * 更新数据
      */
-    public function update(){
+    public function update($id){
+        $arrd = $this->filter();
+        if ($arrd['error']){
+            return $arrd;
+        }
+        $format = $this->db->update_format($arrd['brand']);
+        $sql = "update {$this->table} set {$format} where {$this->id}={$id}";
+        try{
+            $row = $this->db->conn->exec($sql);
+            return [
+                'Code'=>$row,
+                'data'=>$arrd['brand'],
+                'msg'=>'修改成功'
+            ];
+        }catch (\PDOException $e){
+            die('插入失败'.$e->getMessage());
+        }
 
+        return $arrd;
     }
 
     /**
@@ -95,17 +113,15 @@ class Core
     }
 
     /**
-     * @param null $data 需要校验的数据,如果不传入需要校验的数据则默认使用_post请求中的参数
-     * @return array 返回校验后的数据
+     * @param null $data 如果data为空则直接取对应方法中的参数
+     * @return array 过滤后的数据
      */
     public function filter($data=null){
         $arr = [];
         $flag = false;
         foreach($this->fields as $k=>$v){
             if ($v['extra'] == 'auto_increment')continue;
-
-            $value = !empty($data[$k])?$data[$k]:$this->_post($k);
-
+            $value = !empty($data[$k])?$data[$k]:call_user_func([$this,'_'.strtolower($_SERVER['REQUEST_METHOD'])],$k);
             // 判断是否为空
             if (!$v['db_null'] && empty($value)){
                 $flag = true;
@@ -138,7 +154,8 @@ class Core
             $sql = "delete from {$this->table} where {$this->id} = {$id}";
             $row = $this->db->conn->exec($sql);
             return [
-                'Code'=>$row
+                'Code'=>$row,
+                'msg'=>'删除成功',
             ];
         }catch (\PDOException $e){
             return [
@@ -184,6 +201,12 @@ class Core
         return isset($_POST[$key])?$_POST[$key]:null;
     }
 
+    public function _put($key){
+        $_PUT = get_put();
+        return isset($_PUT[$key])?$_PUT[$key]:null;
+    }
+
+
     /**
      * get请求
      * @param null $id
@@ -215,10 +238,41 @@ class Core
         if (!$id){
             return json([
                 'Code'=>0,
-                'msg'=>'请传入id参数',
+                'msg'=>'GET请求请传入需要修改的主键,如:/user/1',
             ]);
         }
+
+        $row = $this->find($id);
+        if (!$row){
+            return json([
+                'Code'=>0,
+                'msg'=>'数据不存在',
+            ]);
+        }
+
         $result = $this->remove($id);
         return json($result);
     }
+
+
+    public function put($id){
+        // 判断是否传入id
+        if (!$id){
+            return json([
+                'Code'=>0,
+                'msg'=>'PUT请求请传入需要修改的主键,如:/user/1',
+            ]);
+        }
+        // 判断这行数据是否存在
+        $row = $this->find($id);
+        if (!$row){
+            return json([
+                'Code'=>0,
+                'msg'=>'数据不存在',
+            ]);
+        }
+        $data = $this->update($id);
+        return json($data);
+    }
+
 }

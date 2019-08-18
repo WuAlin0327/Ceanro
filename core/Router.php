@@ -27,6 +27,13 @@ class Router
      * 入口函数
      */
     public static function main(){
+        $middleware = get_config('middleware');
+
+        // 请求中间件处理
+        foreach($middleware as $v){
+            require_once ROOT_PATH.'/middleware/'.$v.'.php';
+            call_user_func([$v,'request']);
+        }
         $path_info = explode('/',substr($_SERVER['PATH_INFO'],1));
         if (empty($path_info[0])){
             $path_info[0] = 'index';
@@ -35,7 +42,13 @@ class Router
         include('./controller/'.$path_info[0].'.php');
         $method = get_config('method');
         $obj = new $path_info[0];
+        // $response 为json字符串或者xml字符串，如果需要到中间件中进行处理的话需要先将字符串转成数据进行处理
         $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[1])?$path_info[1]:null);
+
+        // 响应中间件处理
+        foreach($middleware as $v){
+            $response = call_user_func([$v,'response'],$response);
+        }
         echo $response;
     }
 
