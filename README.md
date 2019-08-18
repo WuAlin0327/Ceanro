@@ -1,15 +1,15 @@
-### 项目名:Ceanro(暂时)
+## 项目名:Ceanro(暂时)
 ![avatar](https://camo.githubusercontent.com/a72e7743f15db219a6aba534f9de456e86268dd6/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d416e74692532303939362d626c75652e7376673f7374796c653d666c61742d737175617265)
 ![avatar](https://img.shields.io/badge/language-PHP5.6-red.svg)
 ![avatar](https://img.shields.io/badge/name-RESTful框架-blue.svg)
 
 这个项目是一个遵循restful api 接口规范的php轻量级后端框架，适合小型网站以及熟悉php练手使用
-### 下载:
+## 下载:
 ```
 git clone https://github.com/WuAlin0327/restful.git
 ```
 
-### 目录结构:
+## 目录结构:
 ```
 ├── README.md
 ├── config // 配置文件目录
@@ -30,7 +30,7 @@ git clone https://github.com/WuAlin0327/restful.git
 └── router.php // 注册路由
 ```
 
-### 配置文件:config/settings.php
+## 配置文件:config/settings.php
 ```
 return[
 
@@ -82,7 +82,7 @@ $config = get_config()
 $mysql = get_config('mysql')
 ```
 
-### 路由:
+## 路由:
 第一个路由:
 ```
 // 在使用apache的时候最好是把路由绑定到index.php上
@@ -94,7 +94,7 @@ GET http://serverName/index.php
 2. 注册路由
 
 
-#### 根据请求方法进行路由
+### 根据请求方法进行路由
 遵循restful api接口规范，一个URI对应一个资源，一个请求方式对应一个处理请求的方法:
 
 controller/user.php
@@ -152,7 +152,7 @@ PUT http://serverName/user
 DELETE http://serverName/user/1
 ```
 PS:这种方式逻辑都是可以自定义的,为了后续更好的维护代码，应遵循restful api规范，一个URI对应一个资源，在后面会介绍继承Core类对一张数据库表进行快速的增删改查
-#### 注册路由
+### 注册路由
 ```
 <?php
 function register(){
@@ -184,7 +184,7 @@ class user extends \core\Core
     }
 }
 ```
-### 中间件
+## 中间件
 在settings.php中可以配置中间件(middleware)，中间件可以自定义，在请求进来的时候会执行中间件中的request方法，在响应的时候会执行中间件中的response方法
 
 例如:
