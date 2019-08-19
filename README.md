@@ -4,6 +4,8 @@
 ![avatar](https://img.shields.io/badge/name-Ceanro-blue.svg)
 
 这个项目是一个遵循restful api 接口规范的php轻量级后端框架，适合小型网站以及熟悉php练手使用
+## 请求流程
+![avatar](https://raw.githubusercontent.com/WuAlin0327/Ceanro/master/Ceanro.png)
 ## 下载:
 ```
 git clone https://github.com/WuAlin0327/restful.git
