@@ -15,7 +15,7 @@ class Core
     public $db_prefix;
     public $db;
     public $fields;
-
+    public $page_size = 20;
 
     public function __construct()
     {
@@ -50,9 +50,14 @@ class Core
             $data = $this->find($id);
             return $data;
         }
+        $page = $this->_get('page');
+        $page = !empty($page)?$page:1;
+        $offset = ($page-1) * $this->page_size;
+
         $where = $this->where(); // 将$_GET参数拼接成sql语句进行查询(模糊查询)
         $where = !empty($where)?' where '.$where:'';
-        $sql = 'select * from '.$this->table.$where;
+//        $sql = 'select * from '.$this->table.$where." limit {$offset},{$this->page_size}";
+        $sql = "select * from {$this->table}{$where} limit {$offset},{$this->page_size}";
         $data = $this->db->exclude($sql);
         return $data;
     }
