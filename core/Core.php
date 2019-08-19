@@ -16,7 +16,12 @@ class Core
     public $db;
     public $fields;
     public $page_size = 20;
+    public $one_to_one = [
 
+    ];
+    public $foreign_key = [
+
+    ];
     public function __construct()
     {
         $this->db_prefix = get_config('db_prefix');
@@ -35,7 +40,8 @@ class Core
      */
     public function find($id,$type='list[object]'){
         $data = $this->db->exclude('select * from '.$this->table.' where '.$this->id.' = ?',[$id]);
-        return $data;
+
+        return $data[0];
     }
 
     /**
@@ -59,6 +65,19 @@ class Core
 //        $sql = 'select * from '.$this->table.$where." limit {$offset},{$this->page_size}";
         $sql = "select * from {$this->table}{$where} limit {$offset},{$this->page_size}";
         $data = $this->db->exclude($sql);
+
+        // 处理foreign_key外键关系
+        if (!empty($this->foreign_key)){
+            foreach($this->foreign_key as $k=>$v){
+                import('controller.'.$v);
+                $obj = new $v();
+                foreach($data as $kk=>$vv){
+                    if (!$vv[$k])continue;
+                    $data[$kk][$k] = $obj->find($vv[$k]);
+                }
+            }
+        }
+
         return $data;
     }
 
@@ -67,7 +86,7 @@ class Core
      * 更新数据
      */
     public function update($id){
-        $arrd = $this->filter();
+        $arrd = $this->filter(null,$type='change');
         if ($arrd['error']){
             return $arrd;
         }
@@ -78,7 +97,7 @@ class Core
             return [
                 'Code'=>$row,
                 'data'=>$arrd['brand'],
-                'msg'=>'修改成功'
+                'msg'=>$row?'修改成功':'修改失败'
             ];
         }catch (\PDOException $e){
             die('插入失败'.$e->getMessage());
@@ -91,7 +110,7 @@ class Core
      * 插入数据
      */
     public function insert(){
-        $arrd = $this->filter();
+        $arrd = $this->filter(null,'append');
 
         // 标识位，如果有错误则不能插入数据
         if ($arrd['error']){
@@ -121,29 +140,38 @@ class Core
      * @param null $data 如果data为空则直接取对应方法中的参数
      * @return array 过滤后的数据
      */
-    public function filter($data=null){
+    public function filter($data=null,$type='append'){
         $arr = [];
         $flag = false;
+
         foreach($this->fields as $k=>$v){
             if ($v['extra'] == 'auto_increment')continue;
             $value = !empty($data[$k])?$data[$k]:call_user_func([$this,'_'.strtolower($_SERVER['REQUEST_METHOD'])],$k);
             // 判断是否为空
             if (!$v['db_null'] && empty($value)){
-                $flag = true;
-                $arr[$k] = !empty($v['comment'])?$v['comment'].'不能为空':$k.'不能为空';
+                if ($type == 'append'){
+                    $flag = true;
+                    $arr[$k] = !empty($v['comment'])?$v['comment'].'不能为空':$k.'不能为空';
+                }
                 continue;
             };
 
             // 判断长度
             if (($v['data_type'] == 'varchar' || $v['data_type'] == 'char') && !empty($v['max_length']) && strlen($value) > $v['max_length']){
-                $flag = true;
-                $arr[$k] = !empty($v['comment'])?$v['comment']:$k;
-                $arr[$k].='最大长度是:'.$v['max_length'];
+                if ($type == 'append'){
+                    $flag = true;
+                    $arr[$k] = !empty($v['comment'])?$v['comment']:$k;
+                    $arr[$k].='最大长度是:'.$v['max_length'];
+                }
                 continue;
+            }
+            if ($type == 'change'){
+                if (!$value)continue;
             }
 
             $arr[$k] = $value;
         }
+
         return [
             'error'=>$flag,
             'brand'=>$arr,

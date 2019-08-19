@@ -39,7 +39,7 @@ class Router
             $path_info[0] = 'index';
         }
         self::distribution($path_info);
-        include('./controller/'.$path_info[0].'.php');
+        require_once ROOT_PATH.'/controller/'.$path_info[0].'.php';
         $method = get_config('method');
         $obj = new $path_info[0];
         // $response 为json字符串或者xml字符串，如果需要到中间件中进行处理的话需要先将字符串转成数据进行处理

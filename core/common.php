@@ -94,3 +94,12 @@ function get_put(){
         return [];
     }
 }
+
+/**
+ * 根据字符串导入php文件
+ * @param string $dir path.dir
+ */
+function import($dir){
+    list($path,$dirname) = explode('.',$dir);
+    require_once ROOT_PATH.'/'.$path.'/'.$dirname.'.php';
+}
