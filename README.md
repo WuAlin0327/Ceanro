@@ -1,7 +1,7 @@
 ## 项目名:Ceanro(暂时)
 ![avatar](https://camo.githubusercontent.com/a72e7743f15db219a6aba534f9de456e86268dd6/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d416e74692532303939362d626c75652e7376673f7374796c653d666c61742d737175617265)
 ![avatar](https://img.shields.io/badge/language-PHP5.6-red.svg)
-![avatar](https://img.shields.io/badge/name-RESTful框架-blue.svg)
+![avatar](https://img.shields.io/badge/name-Ceanro-blue.svg)
 
 这个项目是一个遵循restful api 接口规范的php轻量级后端框架，适合小型网站以及熟悉php练手使用
 ## 下载:
