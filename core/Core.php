@@ -40,7 +40,7 @@ class Core
      */
     public function find($id,$type='list[object]'){
         $data = $this->db->exclude('select * from '.$this->table.' where '.$this->id.' = ?',[$id]);
-
+        if (!$data)return null;
         return $data[0];
     }
 
@@ -69,6 +69,7 @@ class Core
         // 处理foreign_key外键关系
         if (!empty($this->foreign_key)){
             foreach($this->foreign_key as $k=>$v){
+                if (empty($this->fields[$k]))continue;
                 import('controller.'.$v);
                 $obj = new $v();
                 foreach($data as $kk=>$vv){
