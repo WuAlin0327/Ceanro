@@ -31,7 +31,6 @@ class DataBase
      * @return array
      */
     public function exclude($sql,$format=[],$type='list[dict]'){
-
         $stm = $this->conn->prepare($sql);
         $stm->execute($format);
         $data = $stm->fetchAll($this->data_format[$type]);
@@ -70,6 +69,9 @@ class DataBase
         $into = [];
         $value = [];
         foreach($arr as $k=>$v){
+            if (empty($v)){
+                continue;
+            }
             $into[] = $k;
             $value[] ='\''.$v.'\'';
         }
