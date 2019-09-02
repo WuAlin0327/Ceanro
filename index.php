@@ -3,7 +3,7 @@ header('Content-Type:application/json; charset=utf-8');
 
 // 导入相应的库
 define('ROOT_PATH',dirname(__FILE__));
-define('DEBUG',true);
+define('DEBUG',false);
 ini_set('display_errors',DEBUG);
 require_once ROOT_PATH.'/core/common.php';
 require_once ROOT_PATH.'/core/Router.php';

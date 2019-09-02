@@ -170,7 +170,7 @@ class Core
                 if (!$value)continue;
             }
 
-            $arr[$k] = $value;
+            $arr[$k] = !empty($value)?$value:null;
         }
 
         return [
