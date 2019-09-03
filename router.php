@@ -12,3 +12,7 @@ Router::register(
 Router::register([
    'book/list'=>'index/book/get'
 ]);
+
+Router::register([
+    'user/func/\d+'=>'user/replace'
+]);

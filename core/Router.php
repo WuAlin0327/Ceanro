@@ -70,15 +70,18 @@ class Router
         self::request_middleware();
         $url_prefix = get_config('url_prefix');
         $path = str_replace($url_prefix,'',substr($_SERVER['PATH_INFO'],1));
-        $path_info = explode('/',substr($path,1));
+
+        $path_info = explode('/',$path);
         if (empty($path_info[0])){
             $path_info[0] = 'index';
         }
-        // 判断是否开启多app模式
         $method = get_config('method');
+
+        // 判断是否开启多app模式
         if (get_config('application')){
             $response = self::application($path_info);
             if (!$response && !get_config('forced_routing')){
+
                 require_once ROOT_PATH.'/controller/'.$path_info[0].'/'.$path_info[1].'.php';
                 $obj = new $path_info[1];
                 $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[2])?$path_info[2]:null);

@@ -6,13 +6,15 @@
  * Time: 20:26
  */
 
-
-
+use core\Request;
+use core\Config;
 function get_config($name=null){
-    $config = require ROOT_PATH . '/config/settings.php';
+    $config_obj = Config::instance();
     if (!empty($name)){
 
-        $config = $config[$name];
+        $config = $config_obj->get($name);
+    }else{
+        $config =$config_obj->config;
     }
     return $config;
 }
@@ -102,4 +104,24 @@ function get_put(){
 function import($dir){
     list($path,$dirname) = explode('.',$dir);
     require_once ROOT_PATH.'/'.$path.'/'.$dirname.'.php';
+}
+
+
+/**
+ * 快速方法
+ */
+function _get($key){
+    return Request::instance()->_get($key);
+}
+
+function _post($key){
+    return Request::instance()->_post($key);
+}
+
+function _put($key){
+    return Request::instance()->_put($key);
+}
+
+function request(){
+    return Request::instance();
 }

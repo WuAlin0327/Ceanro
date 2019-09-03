@@ -1,3 +1,4 @@
+# 项目介绍
 ## 项目名:Ceanro(暂时)
 ![avatar](https://camo.githubusercontent.com/a72e7743f15db219a6aba534f9de456e86268dd6/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d416e74692532303939362d626c75652e7376673f7374796c653d666c61742d737175617265)
 ![avatar](https://img.shields.io/badge/language-PHP5.6-red.svg)
@@ -25,6 +26,7 @@ git clone https://github.com/WuAlin0327/restful.git
 │   ├── Request.php // 请求相关的类
 │   ├── Response.php // 响应相关的类
 │   ├── Router.php // 进行路由分发的类
+│   ├── Config.php // 配置文件类
 │   └── common.php // 公共方法
 ├── middleware //中间件
 │   └── FirstMiddleware.php 
@@ -140,39 +142,27 @@ POST http://serverName/user
 
 3. put请求会执行user.php中put方法
 ```
-// 请求数据 以key - value 形式,key是表的字段名,value数据
-data = [
-    username:'alex',
-    password:'123456',
-]
-
 PUT http://serverName/user
 ```
 
 4. delete 请求会执行user.php中delete方法
 ```
-// 删除第一条数据
 DELETE http://serverName/user/1
 ```
 PS:这种方式逻辑都是可以自定义的,为了后续更好的维护代码，应遵循restful api规范，一个URI对应一个资源，在后面会介绍继承Core类对一张数据库表进行快速的增删改查
 ### 注册路由
 ```
 <?php
-function register(){
-    return [
-        // key是需要访问的路由, value是对应controller中 类名/方法名
-        'user/item'=>'user/func',
-    ];
-}
+Router::register([
+    'user/func/'=>'user/replace'
+]);
 ```
 如果路由需要匹配动态参数,比如传入id,可以使用正则表达式去匹配,并且在对应方法中接收该参数
 router.php
 ```
-function register(){
- return [
-    'user/replace/\d+'=>'user/replace',
-    ];
- }
+Router::register([
+    'user/func/\d+'=>'user/replace'
+]);
 ```
 controller/user.php
 ```
@@ -241,3 +231,102 @@ class FirstMiddleware
 在这个中间件中request没有进行处理,response方法在返回的数据增加了url,method参数.
 
 PS:中间件的作用非常大，可以在中间件中实现很多功能(例如权限控制，反爬，登陆验证，请求/响应内容处理)，但是中间件太多也会影响数据请求以及响应的时间，后续会在中间件中实现权限控制
+
+## 控制器
+### 控制器的简单使用
+Ceanro的控制器是使用的类中定义方法的模式，在根目录下的controller文件夹中可以定义PHP类
+
+在config.php中可以开启多APP模式，因为多APP模式可能存在问题，所以本文档中使用的是直接在controller文件夹下新建PHP类的方法控制
+```
+<?php
+
+class user 
+{
+    public function get(){
+        // get请求逻辑
+        echo '这是一个GET请求';
+    }
+}
+```
+如果要访问我们定义的user类中的get方法，只需要访问以下链接(ServerName是你自己的域名),在路由中已经介绍了，如果没有在根目录下的router.php中定义路由，默认使用的是请求方法进行路由匹配，使用get请求访问以下链接会执行user类中的get方法
+```
+http://ServerName/index.php/user/
+```
+
+### 控制器继承Core类
+Core类是core中的核心类，继承该类后可以对一个数据库表进行快速增删该查，Core类中默认有4个处理请求的方法:get|post|put|delete，分别实现了获取数据库表列表、新增一行数据、修改数据、删除数据
+```
+<?php
+
+use core\Request;
+class user extends \core\Core
+{
+
+    public $id = 'id'; // 数据库表的主键
+    public $table = __CLASS__; // 数据库表名
+    
+}
+```
+
+
+# 核心类库介绍
+
+## 请求类
+Ceanro内置了一个请求类，可以通过请求类获取到对应请求的参数以及一些常用的请求头属性，请求类使用了单例模式
+
+### 调用请求类:
+```
+use core\Request;
+$request = Request::instance()
+```
+
+### 获取请求参数:
+```
+use core\Request;
+use core\Config;
+class user extends \core\Core
+{
+    public $id = 'id';
+    public $table = __CLASS__; //
+    public $foreign_key = [
+        'book_id'=>'book'
+    ];
+    public function replace($id){
+      
+        echo Request::instance()->_get('name'); // 获取get请求参数
+        // 获取get请求参数的简写方法,_get('name') == Request::instance()->_get('name');
+        echo _get('name');
+
+        echo Request::instance()->_post('username'); // 获取post请求参数
+        echo _post('username');
+
+        echo Request::instance()->_put('password'); // 获取put请求参数
+        echo _put('password');
+        
+        return json(['data'=>'1']);
+    }
+
+}
+```
+
+### 常用的请求头属性
+```
+use core\Request;
+use core\Config;
+class user extends \core\Core
+{
+    public $id = 'id';
+    public $table = __CLASS__; //
+    public $foreign_key = [
+        'book_id'=>'book'
+    ];
+    public function replace($id){
+        echo Request::instance()->ip; // 请求ip
+        echo Request::instance()->domain; // 完整域名,http://xxx.xx
+        echo Request::instance()->method; // 请求方法  
+        return json(['data'=>'1']);
+    }
+
+}
+
+```

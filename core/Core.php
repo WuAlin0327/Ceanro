@@ -56,7 +56,7 @@ class Core
             $data = $this->find($id);
             return $data;
         }
-        $page = $this->_get('page');
+        $page = _get('page');
         $page = !empty($page)?$page:1;
         $offset = ($page-1) * $this->page_size;
 
@@ -147,7 +147,7 @@ class Core
 
         foreach($this->fields as $k=>$v){
             if ($v['extra'] == 'auto_increment')continue;
-            $value = !empty($data[$k])?$data[$k]:call_user_func([$this,'_'.strtolower($_SERVER['REQUEST_METHOD'])],$k);
+            $value = !empty($data[$k])?$data[$k]:call_user_func('_'.strtolower($_SERVER['REQUEST_METHOD']),$k);
             // 判断是否为空
             if (!$v['db_null'] && empty($value)){
                 if ($type == 'append'){
@@ -206,7 +206,7 @@ class Core
     public function where(){
         $where = [];
         foreach($this->fields as $k=>$v){
-            $val = $this->_get($k);
+            $val = _get($k);
             if (isset($val)){
                 $where [] =  ' '.$k.' like \'%'.$val.'%\'';
             }
@@ -215,30 +215,7 @@ class Core
         return $where;
     }
 
-    public static function params($key){
-        $val = isset($_REQUEST[$key])?$_REQUEST[$key]:null;
-        return $val;
-    }
 
-    /**
-     * 处理GET参数
-     */
-    public function _get($key){
-        return static::params($key);
-    }
-
-    /**
-     * 处理$_POST参数
-     */
-    public function _post($key){
-
-        return isset($_POST[$key])?$_POST[$key]:null;
-    }
-
-    public function _put($key){
-        $_PUT = get_put();
-        return isset($_PUT[$key])?$_PUT[$key]:null;
-    }
 
 
     /**
