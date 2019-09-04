@@ -11,6 +11,7 @@ require_once ROOT_PATH.'/core/common.php';
 require_once ROOT_PATH.'/core/Router.php';
 require_once ROOT_PATH.'/router.php';
 require_once ROOT_PATH.'/core/Request.php';
+require_once ROOT_PATH.'/core/Response.php';
 require_once ROOT_PATH.'/core/Config.php';
 require_once ROOT_PATH.'/core/Core.php';
 require_once ROOT_PATH.'/core/MySql.php';

@@ -7,7 +7,9 @@
  */
 
 use core\Request;
+use core\Response;
 use core\Config;
+use core\DataBase;
 function get_config($name=null){
     $config_obj = Config::instance();
     if (!empty($name)){
@@ -28,14 +30,7 @@ function get_config($name=null){
  * @return false|string 返回json字符串
  */
 function json($data,$callback=null,$status=200){
-
-    $str = json_encode($data);
-    if (!empty($callback)){
-        $str = $callback.'('.$str.')';
-    }
-    $config = get_config('http_response');
-    header($config[$status]);
-    return $str;
+    return Response::instance()->json($data,$callback,$status);
 }
 
 function hasIndex( $arr ){
@@ -49,24 +44,8 @@ function hasIndex( $arr ){
  * @param string $wrap
  * @return string xml格式数据
  */
-function xml( $data, $wrap= 'xml' ){
-    $str = "<{$wrap}>";
-    if( is_array( $data ) ){
-        if( hasIndex( $data ) ){
-            foreach( $data as $k=>$v ){
-                $str .= xml( $v, $k );
-            }
-        }else{
-            foreach( $data as $v ){
-                foreach( $v as $k1=>$v1 )
-                    $str .= xml( $v1, $k1 );
-            }
-        }
-    }else
-        $str .= $data;
-    $str .= "</{$wrap}>";
-
-    return $str;
+function xml( $data,$status = 200){
+    return Response::instance()->xml($data,$status);
 }
 
 function get_put(){
@@ -124,4 +103,9 @@ function _put($key){
 
 function request(){
     return Request::instance();
+}
+
+// table的快速方法
+function table($name){
+    return DataBase::instance()->table($name);
 }

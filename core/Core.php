@@ -7,6 +7,7 @@
  */
 
 namespace core;
+
 class Core
 {
 
@@ -26,7 +27,7 @@ class Core
     {
         $this->db_prefix = get_config('db_prefix');
         $this->table = $this->db_prefix.$this->table;
-        $this->db = new DataBase($this->table);
+        $this->db = DataBase::instance($this->table);
         $this->fields = $this->db->get_fields();
 
     }
