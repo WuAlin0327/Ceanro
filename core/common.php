@@ -105,7 +105,11 @@ function request(){
     return Request::instance();
 }
 
-// table的快速方法
+
+/**
+ * @param string $name 表名
+ * @return DataBase
+ */
 function table($name){
     return DataBase::instance()->table($name);
 }

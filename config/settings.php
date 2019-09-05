@@ -67,12 +67,16 @@ return[
     ],
 
     // url前缀
-    'url_prefix'=>'api',
+    'url_prefix'=>'api/',
 
     // 是否开启多app模式，模式是不开启，不开启的话模块功能放在controller,如果开启可以在controller中开启
-    'application'=>true,
+    'application'=>false,
 
     // 是否开启强制路由匹配,也就是说路由必须匹配成功才会返回响应内容,如果不匹配则返回空
-    'forced_routing'=>true
+    'forced_routing'=>false,
+
+    // 输出完整的sql语句
+    'sql_debug'=>false,
+
 
 ];

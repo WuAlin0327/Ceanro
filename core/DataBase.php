@@ -20,10 +20,15 @@ class DataBase
     static $orders;
     static $table_name;
     static $fields;
+    static $group_by;
     static $parameter=[];
 
     private static $instance;
 
+    /**
+     * @param null $table
+     * @return self DataBase
+     */
     public static function instance($table=null)
     {
         if (self::$instance == null) {
@@ -49,7 +54,10 @@ class DataBase
     public function exclude($sql,$format=[],$type='list[dict]'){
         $stm = self::$instance->conn->prepare($sql);
         $stm->execute($format);
+        if (get_config('sql_debug'))
+            $stm->debugDumpParams();
         $data = $stm->fetchAll(self::$instance->data_format[$type]);
+        self::instance()->reset();
         return $data;
     }
 
@@ -113,7 +121,7 @@ class DataBase
     /**
      * 准备表名
      * @param string $name 默认可以不用传前缀，也可以传表全名
-     * @return mixed
+     * @return self mixed
      */
     public function table($name){
         $db_prefix = get_config('db_prefix');
@@ -127,62 +135,112 @@ class DataBase
         return self::$instance;
     }
 
+
     /**
-     * 准备where语句
-     * @param $where
-     * @return mixed
+     * @param string|array $fields
+     * @return self mixed
      */
-    public function where($where){
-        if (is_string($where)){
-            self::$where = $where;
-        }else{
-            $where_sql = [];
-            foreach($where as $k=>$v){
-                // 如果$k中有问号 例如:['age > ?' => 20]，则将?替换成v
-                if (strpos($k,'?') !== false){
-//                    $where_sql[] = str_replace('?',is_string($v)?'\''.$v.'\'':$v,$k);
-                    $where_sql[] = $k;
-                    self::$parameter[] = $v;
-                    continue;
-                }
-                // 如果$v是数组拼接成 $k in 数组中
-                if (is_array($v)){
-                    $in = [];
-                    foreach($v as $kk=>$vv){
-                        if (is_string($vv))
-                            $in[] = '\''.$vv.'\'';
-                        else
-                            $in[] = $vv;
-                    }
-                    $where_sql[] = $k.' in ('.implode(',',$in).')';
-                }elseif(is_string($v) || is_int($v)){
-                    // 防止sql注入
-                    self::$parameter[] = $v;
-                    $where_sql[] = $k.' = ?';
-                }
-            }
-            self::$where = implode(' and ',$where_sql);
-        }
-
-        return self::$instance;
-    }
-
     public function fields($fields){
         if (is_string($fields)){
             self::$fields = $fields;
         }elseif(is_array($fields)){
             self::$fields = implode(',',$fields);
         }
+        return self::$instance;
+    }
+
+    /**
+     * 准备where语句,一个链式查询中可以有多个where语句，如果传入的参数是数组的话那么默认多个数组之间的关系是and
+     * 如果逻辑判断是 or 或者not 请传入字符串
+     * @param string|array $where
+     * @return self mixed
+     */
+    public function where($where,$params=array()){
+        if (is_string($where)){
+            self::$where .= $where;
+            foreach($params as $k=>$v)
+                self::$parameter[] = $v;
+
+        }else{
+            $where_sql = [];
+            foreach($where as $k=>$v){
+                // 如果$k中有问号 例如:['age > ?' => 20]
+                if (strpos($k,'?') !== false){
+//                    $where_sql[] = str_replace('?',is_string($v)?'\''.$v.'\'':$v,$k);
+                    $where_sql[] = $k;
+                    self::$parameter[] = $v;
+                    continue;
+                }
+
+                // 如果$v是数组拼接成 $k in 数组中
+                if (is_array($v)){
+                    foreach($v as $kk=>$vv){
+                        self::$parameter[] = $vv;
+                    }
+                    $prepare = rtrim( str_pad('?', 2 * count($v), ',?') , ',');
+                    $where_sql[] = $k.' in ('.$prepare.')';
+                    //self::$parameter[] = $v;
+                }elseif(is_string($v) || is_int($v)){
+                    // 防止sql注入
+                    self::$parameter[] = $v;
+                    $where_sql[] = $k.' = ?';
+                }
+            }
+            self::$where .= implode(' and ',$where_sql);
+        }
 
         return self::$instance;
     }
 
-    public function selectAll(){
-        $where = !empty(self::$where)?' where '.self::$where:'';
-        $sql = 'select '.self::$fields.' from '.self::$table_name.$where;
-        $resuful = self::instance()->exclude($sql,self::$parameter);
-        echo json_encode($resuful);
-        echo $sql;
+    /**
+     * 准备order by排序字段
+     * @param string|array $order
+     * @return self mixed
+     */
+    public function order($order){
+        self::$orders = ' order by ';
+        if (is_string($order)){
+            self::$orders .= $order;
+        }else{
+            self::$orders .= implode(',',$order);
+        }
+
+        return self::$instance;
     }
+
+    /**
+     * 执行完sql语句之后需要将这些数据清空以待下一次查询时使用
+     */
+    public function reset(){
+        self::$where = null;
+        self::$orders = null;
+        self::$table_name = null;
+        self::$fields = null;
+        self::$group_by = null;
+        self::$parameter=[];
+    }
+
+    /**
+     * 取出查询到的所有数据
+     * @param string $type
+     * @return array
+     */
+    public function selectAll($type='list[dict]'){
+        $where = !empty(self::$where)?' where '.self::$where:'';
+        $fields = !empty(self::$fields)?self::$fields:'*';
+        $sql = 'select '.$fields.' from '.self::$table_name.$where;
+        $resuful = self::instance()->exclude($sql,self::$parameter,$type);
+        return $resuful;
+    }
+
+    /**
+     * 取查询到的第一条数据
+     * @return array mixed|null
+     */
+    public function select(){
+        $resuful = self::instance()->selectAll();
+        return !empty($resuful[0])?$resuful[0]:null;
+    }
+
 
 }
