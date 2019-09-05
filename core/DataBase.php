@@ -20,6 +20,7 @@ class DataBase
     static $orders;
     static $table_name;
     static $fields;
+    static $parameter=[];
 
     private static $instance;
 
@@ -139,10 +140,11 @@ class DataBase
             foreach($where as $k=>$v){
                 // 如果$k中有问号 例如:['age > ?' => 20]，则将?替换成v
                 if (strpos($k,'?') !== false){
-                    $where_sql[] = str_replace('?',is_string($v)?'\''.$v.'\'':$v,$k);
+//                    $where_sql[] = str_replace('?',is_string($v)?'\''.$v.'\'':$v,$k);
+                    $where_sql[] = $k;
+                    self::$parameter[] = $v;
                     continue;
                 }
-
                 // 如果$v是数组拼接成 $k in 数组中
                 if (is_array($v)){
                     $in = [];
@@ -153,8 +155,10 @@ class DataBase
                             $in[] = $vv;
                     }
                     $where_sql[] = $k.' in ('.implode(',',$in).')';
-                }elseif(is_string($v)){
-                    $where_sql[] = $k.' = \''.$v.'\'';
+                }elseif(is_string($v) || is_int($v)){
+                    // 防止sql注入
+                    self::$parameter[] = $v;
+                    $where_sql[] = $k.' = ?';
                 }
             }
             self::$where = implode(' and ',$where_sql);
@@ -176,7 +180,7 @@ class DataBase
     public function selectAll(){
         $where = !empty(self::$where)?' where '.self::$where:'';
         $sql = 'select '.self::$fields.' from '.self::$table_name.$where;
-        $resuful = self::$instance->exclude($sql);
+        $resuful = self::instance()->exclude($sql,self::$parameter);
         echo json_encode($resuful);
         echo $sql;
     }
