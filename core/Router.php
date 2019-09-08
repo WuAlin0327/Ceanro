@@ -11,7 +11,7 @@ class Router
 
 
     public static function register($url){
-        self::$register_url = $url;
+//        self::$register_url = $url;
         foreach($url as $k=>$v){
             self::$register_url[$k]=$v;
         }
@@ -29,6 +29,7 @@ class Router
         foreach(self::$register_url as $k=>$v){
             preg_match('/'.self::escape($k).'/',$request_path,$ret);
             if (!empty($ret)){
+
                 $func = explode('/',$v);
                 require_once './controller/'.$func[0].'.php';
                 $obj = new $func[0];
@@ -53,6 +54,7 @@ class Router
             preg_match('/'.self::escape($k).'/',$request_path,$ret);
             if (!empty($ret)){
                 list($app,$class,$func) = explode('/',$v);
+
                 require_once ROOT_PATH.'/controller/'.$app.'/'.$class.'.php';
                 $obj = new $class;
                 $response = call_user_func(array($obj,$func),!empty($path_info[2])?$path_info[2]:null);
@@ -76,12 +78,10 @@ class Router
             $path_info[0] = 'index';
         }
         $method = get_config('method');
-
         // 判断是否开启多app模式
         if (get_config('application')){
             $response = self::application($path_info);
             if (!$response && !get_config('forced_routing')){
-
                 require_once ROOT_PATH.'/controller/'.$path_info[0].'/'.$path_info[1].'.php';
                 $obj = new $path_info[1];
                 $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[2])?$path_info[2]:null);

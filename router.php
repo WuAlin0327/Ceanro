@@ -16,3 +16,13 @@ Router::register([
 Router::register([
     'user/func/\d+'=>'user/replace'
 ]);
+Router::register([
+    'user/add'=>'user/add'
+]);
+Router::register([
+    'user/change'=>'user/change'
+]);
+
+Router::register([
+    'user/remove'=>'user/rm'
+]);

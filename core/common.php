@@ -10,6 +10,11 @@ use core\Request;
 use core\Response;
 use core\Config;
 use core\DataBase;
+
+/**
+ * @param null $name
+ * @return mixed
+ */
 function get_config($name=null){
     $config_obj = Config::instance();
     if (!empty($name)){
@@ -110,6 +115,6 @@ function request(){
  * @param string $name 表名
  * @return DataBase
  */
-function table($name){
+function table($name=null){
     return DataBase::instance()->table($name);
 }

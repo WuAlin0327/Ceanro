@@ -21,6 +21,8 @@ class DataBase
     static $table_name;
     static $fields;
     static $group_by;
+    static $set;
+    static $limit;
     static $parameter=[];
 
     private static $instance;
@@ -49,20 +51,26 @@ class DataBase
     /**
      * @param string $sql SQL语句
      * @param null $type 返回数据类型
-     * @return array
+     * @return array|int
      */
     public function exclude($sql,$format=[],$type='list[dict]'){
         $stm = self::$instance->conn->prepare($sql);
-        $stm->execute($format);
+        $params = !empty($format)?$format:self::$parameter;
+        $stm->execute($params);
         if (get_config('sql_debug'))
             $stm->debugDumpParams();
-        $data = $stm->fetchAll(self::$instance->data_format[$type]);
         self::instance()->reset();
+        if (strpos($sql,'update') !== false || strpos($sql,'insert') !== false || strpos($sql,'delete') !== false){
+            $stm->closeCursor();
+            return $stm->rowCount();
+        }
+        $data = $stm->fetchAll(self::$instance->data_format[$type]);
+        $stm->closeCursor();
         return $data;
     }
 
 
-    public function get_fields(){
+    public function get_fields($table=null){
         $sql = '
         select 
             column_name as db_fields ,
@@ -75,7 +83,7 @@ class DataBase
         where table_name = ?
         ';
 
-        $fields = self::$instance->exclude($sql,[self::$instance->table]);
+        $fields = self::$instance->exclude($sql,[!empty($table)?$table:self::$instance->table]);
         $ret = [];
         foreach($fields as $k=>$v){
             $ret[$v['db_fields']] = $v;
@@ -118,12 +126,18 @@ class DataBase
         return implode(',',$update);
     }
 
+
+    ///////////////////// 下面的方法是对数据库进行链式操作的方法 ///////////////////////////
     /**
      * 准备表名
      * @param string $name 默认可以不用传前缀，也可以传表全名
      * @return self mixed
      */
     public function table($name){
+        if (empty($name)){
+            self::$table_name = self::instance()->table;
+            return self::$instance;
+        }
         $db_prefix = get_config('db_prefix');
         $table = null;
         if (strpos($name,$db_prefix) !== false)
@@ -208,6 +222,16 @@ class DataBase
         return self::$instance;
     }
 
+
+    /**
+     * @param string $limit 传入limit的时候请传入该格式:1,2
+     * @return self mixed
+     */
+    public function limit($limit){
+        self::$limit = ' limit '.$limit;
+        return self::$instance;
+    }
+
     /**
      * 执行完sql语句之后需要将这些数据清空以待下一次查询时使用
      */
@@ -218,6 +242,8 @@ class DataBase
         self::$fields = null;
         self::$group_by = null;
         self::$parameter=[];
+        self::$set = null;
+        self::$limit = null;
     }
 
     /**
@@ -228,7 +254,9 @@ class DataBase
     public function selectAll($type='list[dict]'){
         $where = !empty(self::$where)?' where '.self::$where:'';
         $fields = !empty(self::$fields)?self::$fields:'*';
-        $sql = 'select '.$fields.' from '.self::$table_name.$where;
+        $order = !empty(self::$orders)?self::$orders:'';
+        $limit  = !empty(self::$limit)?self::$limit:'';
+        $sql = 'select '.$fields.' from '.self::$table_name.$where.$order.$limit;
         $resuful = self::instance()->exclude($sql,self::$parameter,$type);
         return $resuful;
     }
@@ -242,5 +270,89 @@ class DataBase
         return !empty($resuful[0])?$resuful[0]:null;
     }
 
+
+    /**
+     * insert into 表名 (字段1,字段2,字段3,字段4) value(值1,值2,值3,值4);
+     * @param array $params
+     * @return self mixed
+     */
+    public function insert_set($params){
+        $set = [];
+        $flag = true; // 如果是字符串..
+        foreach($params as $k=>$v){
+            if (is_string($v)){
+                self::$parameter[] = $v;
+            }elseif(is_array($v)){
+                $flag = false;
+                foreach($v as $kk=>$vv){
+                    $set[$k][$kk] = $v;
+                    self::$parameter[] = $vv;
+                }
+            }
+        }
+        if ($flag){
+            // 插入单行
+             self::$set = '('.rtrim( str_pad('?', 2 * count($params), ',?') , ',').')';
+        }else{
+            // 插入多行
+            foreach($set as $k=>$v){
+                self::$set .= '('.rtrim( str_pad('?', 2 * count($v), ',?') , ',').'),';
+            }
+            self::$set = substr(self::$set ,0,strlen(self::$set)-1);;
+        }
+
+        return self::$instance;
+    }
+
+    /**
+     * @return array|int
+     */
+    public function insert(){
+        $fields = !empty(self::$fields)?'('.self::$fields.')':'';
+        $sql = 'insert into '.self::$table_name.$fields.' value '.self::$set;
+        $rowCount = self::instance()->exclude($sql,self::$parameter);
+        return $rowCount;
+    }
+
+
+    /**
+     * @param array $params
+     * @return self mixed
+     */
+    public function update_set($params){
+        $arrd = [];
+        foreach($params as $k => $v){
+            $arrd[] = $k.' = ?';
+            self::$parameter[] = $v;
+        }
+        self::$set = implode(',',$arrd);
+
+        return self::$instance;
+    }
+
+
+    /**
+     * 更新数据
+     * @return int
+     */
+    public function update(){
+        $where = !empty(self::$where)?' where '.self::$where:'';
+        $sql = 'update '.self::$table_name.' set '.self::$set.$where;
+        $rowCount = self::instance()->exclude($sql);
+
+        return $rowCount;
+    }
+
+
+    /**
+     * 删除数据
+     * @return array|int
+     */
+    public function delete(){
+        $where = !empty(self::$where)?' where '.self::$where:'';
+        $sql = 'delete from '.self::$table_name.$where;
+        $rowCount = self::instance()->exclude($sql,self::$parameter);
+        return $rowCount;
+    }
 
 }

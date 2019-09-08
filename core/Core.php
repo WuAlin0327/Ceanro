@@ -40,9 +40,9 @@ class Core
      * @return array|null
      */
     public function find($id,$type='list[object]'){
-        $data = $this->db->exclude('select * from '.$this->table.' where '.$this->id.' = ?',[$id]);
-        if (!$data)return null;
-        return $data[0];
+        // 使用新的链式编程去取数据
+        $row = table($this->table)->where([$this->id=>$id])->select();
+        return $row;
     }
 
     /**
@@ -61,17 +61,23 @@ class Core
         $page = !empty($page)?$page:1;
         $offset = ($page-1) * $this->page_size;
 
-        $where = $this->where(); // 将$_GET参数拼接成sql语句进行查询(模糊查询)
-        $where = !empty($where)?' where '.$where:'';
-//        $sql = 'select * from '.$this->table.$where." limit {$offset},{$this->page_size}";
-        $sql = "select * from {$this->table}{$where} limit {$offset},{$this->page_size}";
-        $data = $this->db->exclude($sql);
+        // 使用链式编程改写Core中的select方法
+        $params = [];
+        foreach($this->fields as $k=>$v){
+            if (!empty(_get($k))){
+                $params[$k.' like ?'] = '%'._get($k).'%';
+            }
+        }
+        $data = table()->where($params)->limit($offset.','.$this->page_size)->selectAll();
 
         // 处理foreign_key外键关系
         if (!empty($this->foreign_key)){
+
             foreach($this->foreign_key as $k=>$v){
+
                 if (empty($this->fields[$k]))continue;
                 import('controller.'.$v);
+
                 $obj = new $v();
                 foreach($data as $kk=>$vv){
                     if (!$vv[$k])continue;
