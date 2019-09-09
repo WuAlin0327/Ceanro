@@ -35,6 +35,7 @@ function get_config($name=null){
  * @return false|string 返回json字符串
  */
 function json($data,$callback=null,$status=200){
+
     return Response::instance()->json($data,$callback,$status);
 }
 
@@ -51,6 +52,26 @@ function hasIndex( $arr ){
  */
 function xml( $data,$status = 200){
     return Response::instance()->xml($data,$status);
+}
+
+
+function to_xml($data,$wrap= 'xml'){
+    $str = "<{$wrap}>";
+    if( is_array( $data ) ){
+        if( hasIndex( $data ) ){
+            foreach( $data as $k=>$v ){
+                $str .= to_xml( $v, $k );
+            }
+        }else{
+            foreach( $data as $v ){
+                foreach( $v as $k1=>$v1 )
+                    $str .= to_xml( $v1, $k1 );
+            }
+        }
+    }else
+        $str .= $data;
+    $str .= "</{$wrap}>";
+    return $str;
 }
 
 function get_put(){

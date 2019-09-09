@@ -51,22 +51,10 @@ class Response
      * @return self
      */
     public function xml( $data,$status,$wrap= 'xml' ){
+        header('Content-Type: text/xml');
         header(get_config('http_response')[$status]);
-        $str = "<{$wrap}>";
-        if( is_array( $data ) ){
-            if( hasIndex( $data ) ){
-                foreach( $data as $k=>$v ){
-                    $str .= self::xml( $v, $k );
-                }
-            }else{
-                foreach( $data as $v ){
-                    foreach( $v as $k1=>$v1 )
-                        $str .= self::xml( $v1, $k1 );
-                }
-            }
-        }else
-            $str .= $data;
-        $str .= "</{$wrap}>";
+        $str = to_xml($data,$wrap);
+        $str = '<!--?xml version="1.0"?--> '.$str;
         self::$instance->response = $str;
         self::$instance->data_type = 'xml';
         return self::instance();
