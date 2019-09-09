@@ -6,6 +6,7 @@
  * Time: 20:31
  */
 
+use core\Response;
 class FirstMiddleware
 {
 
@@ -17,15 +18,20 @@ class FirstMiddleware
     }
 
     /**
-     * @param string $response 响应的json字符串数据
-     * @return mixed 处理后的响应数据
+     * @param \core\Response $response 响应类
+     * @return \core\Response mixed 处理后的响应数据
      */
-    static public function response($response){
+    static public function response(){
+        $data = [];
+        $response = Response::instance();
         // 这个中间件是如果返回的数据是json数据的话会加上url和请求方法
-        $data = json_decode($response,true);
-        if (!$data)return $response;
-        $data['url'] = $_SERVER['PATH_INFO'];
-        $data['method'] = $_SERVER['REQUEST_METHOD'];
-        return json_encode($data);
+        if ($response->data_type == 'json'){
+            $response->response = json_decode($response->response,true);
+            $data['url'] = $_SERVER['PATH_INFO'];
+            $data['method'] = $_SERVER['REQUEST_METHOD'];
+            $data['data'] = $response->response;
+            $response->response = json_encode($data);
+        }
+        return $response;
     }
 }

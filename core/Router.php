@@ -1,5 +1,6 @@
 <?php
 
+use core\Response;
 class Router
 {
     static $register_url = [];
@@ -33,11 +34,9 @@ class Router
                 $func = explode('/',$v);
                 require_once './controller/'.$func[0].'.php';
                 $obj = new $func[0];
-                $response = call_user_func(array($obj,$func[1]),!empty($path_info[2])?$path_info[2]:null);
-                return $response;
+                call_user_func(array($obj,$func[1]),!empty($path_info[2])?$path_info[2]:null);
             }
         }
-        return null;
     }
 
     /**
@@ -57,11 +56,9 @@ class Router
 
                 require_once ROOT_PATH.'/controller/'.$app.'/'.$class.'.php';
                 $obj = new $class;
-                $response = call_user_func(array($obj,$func),!empty($path_info[2])?$path_info[2]:null);
-                return $response;
+                call_user_func(array($obj,$func),!empty($path_info[2])?$path_info[2]:null);
             }
         }
-        return null;
     }
 
     /**
@@ -78,27 +75,29 @@ class Router
             $path_info[0] = 'index';
         }
         $method = get_config('method');
+        $response_obj = Response::instance();
         // 判断是否开启多app模式
         if (get_config('application')){
-            $response = self::application($path_info);
-            if (!$response && !get_config('forced_routing')){
+            self::application($path_info);
+            if (!$response_obj->response && !get_config('forced_routing')){
                 require_once ROOT_PATH.'/controller/'.$path_info[0].'/'.$path_info[1].'.php';
                 $obj = new $path_info[1];
-                $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[2])?$path_info[2]:null);
+                call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[2])?$path_info[2]:null);
             }
         }else{
-            $response = self::distribution($path_info);
-            if (!$response && !get_config('forced_routing')){
+            self::distribution($path_info);
+            if (!$response_obj->response && !get_config('forced_routing')){
                 require_once ROOT_PATH.'/controller/'.$path_info[0].'.php';
                 $obj = new $path_info[0];
-                // $response 为json字符串或者xml字符串，如果需要到中间件中进行处理的话需要先将字符串转成数据进行处理
-                $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[1])?$path_info[1]:null);
+                call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[1])?$path_info[1]:null);
             }
         }
 
         // 响应中间件处理
-        self::response_middleware($response);
-        echo $response;
+        self::response_middleware();
+
+        // 输出响应内容
+        echo $response_obj->response;
 
     }
 
@@ -111,10 +110,10 @@ class Router
      * @param array $middleware 中间件
      * @param string $response 响应的json字符串内容
      */
-    static function response_middleware(&$response){
+    static function response_middleware(){
         $middleware = get_config('middleware');
         foreach($middleware as $v){
-            $response = call_user_func([$v,'response'],$response);
+            call_user_func([$v,'response']);
         }
     }
 
