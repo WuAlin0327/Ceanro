@@ -26,7 +26,7 @@ class Router
     public static function distribution($path_info){
 
         $request_path = implode('/',$path_info);
-
+        $response = null;
         foreach(self::$register_url as $k=>$v){
             preg_match('/'.self::escape($k).'/',$request_path,$ret);
             if (!empty($ret)){
@@ -34,9 +34,10 @@ class Router
                 $func = explode('/',$v);
                 require_once './controller/'.$func[0].'.php';
                 $obj = new $func[0];
-                call_user_func(array($obj,$func[1]),!empty($path_info[2])?$path_info[2]:null);
+                $response = call_user_func(array($obj,$func[1]),!empty($path_info[2])?$path_info[2]:null);
             }
         }
+        return $response;
     }
 
     /**
@@ -47,7 +48,7 @@ class Router
 //        echo json($path_info);
 //        list($app,$class,$func) = $path_info;
         $request_path = implode('/',$path_info);
-
+        $response = null;
         // 对路由进行匹配
         foreach(self::$register_url as $k=>$v){
             preg_match('/'.self::escape($k).'/',$request_path,$ret);
@@ -56,9 +57,10 @@ class Router
 
                 require_once ROOT_PATH.'/controller/'.$app.'/'.$class.'.php';
                 $obj = new $class;
-                call_user_func(array($obj,$func),!empty($path_info[2])?$path_info[2]:null);
+                $response = call_user_func(array($obj,$func),!empty($path_info[2])?$path_info[2]:null);
             }
         }
+        return $response;
     }
 
     /**
@@ -76,29 +78,31 @@ class Router
         }
         $method = get_config('method');
         $response_obj = Response::instance();
+        $response = null;
         // 判断是否开启多app模式
         if (get_config('application')){
-            self::application($path_info);
-            if (!$response_obj->response && !get_config('forced_routing')){
+            $response = self::application($path_info);
+            if (!$response && !get_config('forced_routing')){
                 require_once ROOT_PATH.'/controller/'.$path_info[0].'/'.$path_info[1].'.php';
                 $obj = new $path_info[1];
-                call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[2])?$path_info[2]:null);
+                $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[2])?$path_info[2]:null);
             }
         }else{
-            self::distribution($path_info);
-            if (!$response_obj->response && !get_config('forced_routing')){
+            $response = self::distribution($path_info);
+            if (!$response && !get_config('forced_routing')){
                 require_once ROOT_PATH.'/controller/'.$path_info[0].'.php';
                 $obj = new $path_info[0];
-                call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[1])?$path_info[1]:null);
+                $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[1])?$path_info[1]:null);
             }
         }
 
+        $response_obj->response = $response;
         // 响应中间件处理
         self::response_middleware();
 
         // 输出响应内容
         echo $response_obj->response;
-
+        die();
     }
 
     static function escape($str){

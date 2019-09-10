@@ -30,7 +30,7 @@ class Response
      * @param $data
      * @param null $callback
      * @param int $status
-     * @return self
+     * @return string
      */
     public function json($data,$callback=null,$status=200){
         $str = json_encode($data);
@@ -39,25 +39,23 @@ class Response
         }
         $config = get_config('http_response');
         header($config[$status]);
-        self::$instance->response = $str;
         self::$instance->data_type = 'json';
-        return self::instance();
+        return $str;
     }
 
     /**
      * @param $data
      * @param $status
      * @param string $wrap
-     * @return self
+     * @return string
      */
     public function xml( $data,$status,$wrap= 'xml' ){
         header('Content-Type: text/xml');
         header(get_config('http_response')[$status]);
         $str = to_xml($data,$wrap);
         $str = '<!--?xml version="1.0"?--> '.$str;
-        self::$instance->response = $str;
         self::$instance->data_type = 'xml';
-        return self::instance();
+        return $str;
     }
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-
+use core\Session;
 class user extends \core\Core
 {
 
@@ -35,7 +35,13 @@ class user extends \core\Core
 //            $data = '未查询到数据';
 //        }
 
-        return json($data,$callback,'201');
+        // Session::instance()->read_session();
+
+         Session::instance()->set('username','wualin');
+         Session::instance()->set('password','miaomiaomiao');
+         
+        return json($data);
+
     }
 
     // 测试插入数据链式操作

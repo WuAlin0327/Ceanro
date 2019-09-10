@@ -77,6 +77,5 @@ return[
 
     // 输出完整的sql语句
     'sql_debug'=>false,
-
-
+    
 ];
