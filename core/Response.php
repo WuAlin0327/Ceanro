@@ -37,8 +37,6 @@ class Response
         if (!empty($callback)){
             $str = $callback.'('.$str.')';
         }
-        $config = get_config('http_response');
-        header($config[$status]);
         self::$instance->data_type = 'json';
         return $str;
     }
@@ -50,8 +48,6 @@ class Response
      * @return string
      */
     public function xml( $data,$status,$wrap= 'xml' ){
-        header('Content-Type: text/xml');
-        header(get_config('http_response')[$status]);
         $str = to_xml($data,$wrap);
         $str = '<!--?xml version="1.0"?--> '.$str;
         self::$instance->data_type = 'xml';

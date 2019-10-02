@@ -29,13 +29,12 @@ function get_config($name=null){
 
 /**
  * 返回Json数据
- * @param array $data 需要打包的数据
+ * @param array|string|float|int $data 需要打包的数据
  * @param null $callback 回调参数
  * @param int $status 响应状态
  * @return false|string 返回json字符串
  */
 function json($data,$callback=null,$status=200){
-
     return Response::instance()->json($data,$callback,$status);
 }
 

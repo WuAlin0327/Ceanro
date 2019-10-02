@@ -177,27 +177,27 @@ class DataBase
 
         }else{
             $where_sql = [];
-            foreach($where as $k=>$v){
+            foreach($where as $field=>$value){
                 // 如果$k中有问号 例如:['age > ?' => 20]
-                if (strpos($k,'?') !== false){
+                if (strpos($field,'?') !== false){
 //                    $where_sql[] = str_replace('?',is_string($v)?'\''.$v.'\'':$v,$k);
-                    $where_sql[] = $k;
-                    self::$parameter[] = $v;
+                    $where_sql[] = $field;
+                    self::$parameter[] = $value;
                     continue;
                 }
 
                 // 如果$v是数组拼接成 $k in 数组中
-                if (is_array($v)){
-                    foreach($v as $kk=>$vv){
+                if (is_array($value)){
+                    foreach($value as $kk=>$vv){
                         self::$parameter[] = $vv;
                     }
-                    $prepare = rtrim( str_pad('?', 2 * count($v), ',?') , ',');
-                    $where_sql[] = $k.' in ('.$prepare.')';
+                    $prepare = rtrim( str_pad('?', 2 * count($value), ',?') , ',');
+                    $where_sql[] = ('`'.$field.'`').' in ('.$prepare.')';
                     //self::$parameter[] = $v;
-                }elseif(is_string($v) || is_int($v)){
+                }elseif(is_string($value) || is_int($value)){
                     // 防止sql注入
-                    self::$parameter[] = $v;
-                    $where_sql[] = $k.' = ?';
+                    self::$parameter[] = $value;
+                    $where_sql[] = ('`'.$field.'`').' = ?';
                 }
             }
             self::$where .= implode(' and ',$where_sql);
@@ -257,6 +257,7 @@ class DataBase
         $order = !empty(self::$orders)?self::$orders:'';
         $limit  = !empty(self::$limit)?self::$limit:'';
         $sql = 'select '.$fields.' from '.self::$table_name.$where.$order.$limit;
+
         $resuful = self::instance()->exclude($sql,self::$parameter,$type);
         return $resuful;
     }
@@ -276,18 +277,18 @@ class DataBase
      * @param array $params
      * @return self mixed
      */
-    public function insert_set($params){
+    public function value($params){
         $set = [];
         $flag = true; // 如果是字符串..
         foreach($params as $k=>$v){
-            if (is_string($v)){
-                self::$parameter[] = $v;
-            }elseif(is_array($v)){
+            if(is_array($v)){
                 $flag = false;
                 foreach($v as $kk=>$vv){
-                    $set[$k][$kk] = $v;
+                    $set['`'.$k.'`'][$kk] = $v;
                     self::$parameter[] = $vv;
                 }
+            }else{
+                self::$parameter[] = $v;
             }
         }
         if ($flag){
@@ -338,8 +339,8 @@ class DataBase
     public function update(){
         $where = !empty(self::$where)?' where '.self::$where:'';
         $sql = 'update '.self::$table_name.' set '.self::$set.$where;
-        $rowCount = self::instance()->exclude($sql);
 
+        $rowCount = self::instance()->exclude($sql);
         return $rowCount;
     }
 

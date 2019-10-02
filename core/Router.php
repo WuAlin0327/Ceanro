@@ -18,7 +18,6 @@ class Router
         }
     }
 
-
     /**
      * 未开启多App模式的路由分发功能
      * @param array $path_info
@@ -79,6 +78,10 @@ class Router
         $method = get_config('method');
         $response_obj = Response::instance();
         $response = null;
+        if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS'){
+            echo '';
+            exit;
+        }
         // 判断是否开启多app模式
         if (get_config('application')){
             $response = self::application($path_info);
@@ -88,18 +91,19 @@ class Router
                 $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[2])?$path_info[2]:null);
             }
         }else{
+
             $response = self::distribution($path_info);
             if (!$response && !get_config('forced_routing')){
                 require_once ROOT_PATH.'/controller/'.$path_info[0].'.php';
                 $obj = new $path_info[0];
                 $response = call_user_func([$obj,$method[strtolower($_SERVER['REQUEST_METHOD'])]],isset($path_info[1])?$path_info[1]:null);
             }
+
         }
 
         $response_obj->response = $response;
         // 响应中间件处理
         self::response_middleware();
-
         // 输出响应内容
         echo $response_obj->response;
         die();

@@ -63,8 +63,9 @@ class Request
      * @return null
      */
     public function _post($key){
-
-        return isset($_POST[$key])?$_POST[$key]:null;
+        $request_body = file_get_contents('php://input');
+        $post_data = json_decode($request_body, true);
+        return isset($_POST[$key])?$_POST[$key]:$post_data[$key];
     }
 
     /**
@@ -77,4 +78,30 @@ class Request
         return isset($_PUT[$key])?$_PUT[$key]:null;
     }
 
+    public function isGet(){
+        if (self::$instance->method=='GET')return true;
+        return false;
+    }
+
+    public function isPost(){
+        if (self::$instance->method=='POST')return true;
+        return false;
+    }
+
+    public function isPut(){
+        if (self::$instance->method=='PUT')return true;
+        return false;
+    }
+
+    public function isDelete(){
+        if (self::$instance->method=='DELETE')return true;
+        return false;
+    }
+
+    public function isAjax(){
+        if(isset($_SERVER["HTTP_X_REQUESTED_WITH"]) && strtolower($_SERVER["HTTP_X_REQUESTED_WITH"])=="xmlhttprequest"){
+            return true;
+        }
+        return false;
+    }
 }

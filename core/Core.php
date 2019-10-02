@@ -98,19 +98,18 @@ class Core
         if ($arrd['error']){
             return $arrd;
         }
-        $format = $this->db->update_format($arrd['brand']);
-        $sql = "update {$this->table} set {$format} where {$this->id}={$id}";
         try{
-            $row = $this->db->conn->exec($sql);
+            // 使用数据库表链式操作更新数据库
+            $db = DataBase::instance();
+            $rowCount = $db->table($this->table)->update_set($arrd['brand'])->where([$this->id=>$id])->update();
             return [
-                'Code'=>$row,
+                'Code'=>$rowCount,
                 'data'=>$arrd['brand'],
-                'msg'=>$row?'修改成功':'修改失败'
+                'msg'=>$rowCount?'修改成功':'修改失败'
             ];
         }catch (\PDOException $e){
             die('插入失败'.$e->getMessage());
         }
-
         return $arrd;
     }
 
@@ -119,18 +118,13 @@ class Core
      */
     public function insert(){
         $arrd = $this->filter(null,'append');
-
         // 标识位，如果有错误则不能插入数据
         if ($arrd['error']){
             return $arrd;
         }
-        $format = $this->db->insert_format($arrd['brand']);
-
-        $sql = "insert into {$this->table} {$format}";
-
+        $db = DataBase::instance();
         try{
-
-            $row = $this->db->conn->exec($sql);
+            $row =  $db->table($this->table)->fields(array_keys($arrd['brand']))->value(array_values($arrd['brand']))->insert();;
             return [
                 'Code'=>$row,
                 'data'=>$arrd['brand'],
@@ -191,12 +185,11 @@ class Core
      */
     public function remove($id){
         try{
-            // $sql = 'delete from '.$this->table.' where '.$this->id .'='.$id;
-            $sql = "delete from {$this->table} where {$this->id} = {$id}";
-            $row = $this->db->conn->exec($sql);
+            $db = DataBase::instance();
+            $row = $db->table($this->table)->where([$this->id=>$id])->delete();
             return [
                 'Code'=>$row,
-                'msg'=>'删除成功',
+                'msg'=>$row?'删除成功':'删除失败',
             ];
         }catch (\PDOException $e){
             return [
@@ -206,24 +199,6 @@ class Core
         }
     }
 
-    /**
-     * 将Get参数拼接成sql的查询语句
-     */
-
-    public function where(){
-        $where = [];
-        foreach($this->fields as $k=>$v){
-            $val = _get($k);
-            if (isset($val)){
-                $where [] =  ' '.$k.' like \'%'.$val.'%\'';
-            }
-        }
-        $where = implode(' and ',$where);
-        return $where;
-    }
-
-
-
 
     /**
      * get请求
@@ -232,10 +207,8 @@ class Core
      */
     public function get($id=null){
         $data = $this->select($id);
-        $response = [
-            'Code'=>1,
-            'data'=>$data
-        ];
+        $response=$data;
+
         return json($response);
     }
 
